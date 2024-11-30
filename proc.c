@@ -14,6 +14,8 @@ struct {
 
 static struct proc *initproc;
 
+extern int strace;
+
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);

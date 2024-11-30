@@ -89,3 +89,15 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int sys_strace(void)
+{
+    int on_off;
+
+    if (argint(0, &on_off) < 0)
+        return -1;
+
+    strace = on_off;
+    return 0;
+}
+
