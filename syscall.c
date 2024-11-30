@@ -149,6 +149,7 @@ static const char *syscall_name[] = {
   [SYS_link]    "link",
   [SYS_mkdir]   "mkdir",
   [SYS_close]   "close",
+  [SYS_strace]  "strace",
 };
 
 void
@@ -162,7 +163,6 @@ if (strace) {
   // get system call
   const char *syscall_name_str = syscall_name[num];
   if (syscall_name_str) {
-    cprintf("\n");
     cprintf("TRACE: pid = %d | command name = %s | syscall = %s", proc->pid, proc->name, syscall_name_str);
 
     int return_value = syscalls[num]();
