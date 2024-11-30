@@ -101,6 +101,7 @@ extern int sys_uptime(void);
 extern int sys_strace(void);
 
 int strace = 0;
+int shell_reading_command = 0;
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -156,32 +157,58 @@ void
 syscall(void)
 {
   int num;
-
   num = proc->tf->eax;
-  // strace on
-if (strace) {
-  // get system call
-  const char *syscall_name_str = syscall_name[num];
-  if (syscall_name_str) {
-    cprintf("TRACE: pid = %d | command name = %s | syscall = %s", proc->pid, proc->name, syscall_name_str);
-
-    int return_value = syscalls[num]();
-    cprintf(" | return value = %d\n", return_value);
-    
-    if (num == SYS_exit) {
-      cprintf("\n");
+  
+  if (strace) {
+    const char *syscall_name_str = syscall_name[num];
+    if (syscall_name_str) {
+      // Check if the shell is reading a command
+      if (strncmp(proc->name, "sh", 2) == 0) {
+        if (num == SYS_read) {
+          shell_reading_command = 1;
+        } else if (num == SYS_wait) {
+          shell_reading_command = 0;
+        }
+        
+        // Only trace the shell's read syscall when reading a command
+        if (shell_reading_command || num == SYS_exec) {
+          cprintf("TRACE: pid = %d | command name = %s | syscall = %s", 
+                  proc->pid, proc->name, syscall_name_str);
+          int return_value = syscalls[num]();
+          cprintf(" | return value = %d\n", return_value);
+          proc->tf->eax = return_value;
+          return;
+        }
+      } else {
+        // Trace non-shell processes normally
+        if (num == SYS_write) {
+          int return_value = syscalls[num]();
+          cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
+                  proc->pid, proc->name, syscall_name_str, return_value);
+          proc->tf->eax = return_value;
+        } else {
+          cprintf("TRACE: pid = %d | command name = %s | syscall = %s", 
+                  proc->pid, proc->name, syscall_name_str);
+          int return_value = syscalls[num]();
+          cprintf(" | return value = %d\n", return_value);
+          
+          if (num == SYS_exit) {
+            cprintf("\n");
+          }
+          
+          proc->tf->eax = return_value;
+        }
+      }
+    } else {
+      cprintf("TRACE: pid = %d | command name = %s | unknown syscall\n", 
+              proc->pid, proc->name);
     }
-    
-    proc->tf->eax = return_value;
   } else {
-    cprintf("TRACE: pid = %d | command name = %s | unknown syscall\n", proc->pid, proc->name);
+    if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+      proc->tf->eax = syscalls[num]();
+    } else {
+      cprintf("%d %s: unknown sys call %d\n", proc->pid, proc->name, num);
+      proc->tf->eax = -1;
+    }
   }
-} else {
-  if (num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    proc->tf->eax = syscalls[num]();
-  } else {
-    cprintf("%d %s: unknown sys call %d\n", proc->pid, proc->name, num);
-    proc->tf->eax = -1;
-  }
-}
 }
