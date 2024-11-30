@@ -168,6 +168,10 @@ if (strace) {
     int return_value = syscalls[num]();
     cprintf(" | return value = %d\n", return_value);
     
+    if (num == SYS_exit) {
+      cprintf("\n");
+    }
+    
     proc->tf->eax = return_value;
   } else {
     cprintf("TRACE: pid = %d | command name = %s | unknown syscall\n", proc->pid, proc->name);
