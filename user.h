@@ -30,6 +30,7 @@ int excid(int);
 int get_trace_flag(void);
 int set_success_flag(void);
 int set_fail_flag(void);
+int race(void);
 
 // ulib.c
 int stat(char*, struct stat*);
