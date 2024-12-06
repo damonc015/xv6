@@ -62,11 +62,9 @@ main(int argc, char *argv[])
       printf(2, "Unknown syscall: %s\n", argv[i + 1]);
       exit();
     } else if(strcmp(argv[i], "-f") == 0){
-      t_toggle(TRACE_ON);
       set_fail_flag();  
       exit();  
     } else if(strcmp(argv[i], "-s") == 0){
-      t_toggle(TRACE_ON);
       set_success_flag();   
       exit();  
     }
@@ -78,7 +76,7 @@ main(int argc, char *argv[])
         exit();
     }
     
-    // Check trace_flag
+    // Check trace_flag and make copy
     int was_tracing = get_trace_flag();
     t_toggle(TRACE_ON);
     
