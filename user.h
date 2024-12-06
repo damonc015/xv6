@@ -1,5 +1,4 @@
 #include "types.h"
-
 struct stat;
 struct rtcdate;
 
@@ -25,7 +24,12 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int strace(int);
+int trace(int);
+int t_toggle(int);
+int excid(int);
+int get_trace_flag(void);
+int set_success_flag(void);
+int set_fail_flag(void);
 
 // ulib.c
 int stat(char*, struct stat*);

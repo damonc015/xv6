@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "trace.h"
 
 int
 sys_fork(void)
@@ -90,14 +91,53 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_strace(void)
+int
+sys_trace(void)
+{
+    int on_off;
+
+    if(argint(0, &on_off) < 0)  // Get argument (0 or 1) from user space
+        return -1;
+
+    proc->tracer = on_off;  // Set the process's tracer flag directly
+    return 0;
+}
+
+int sys_t_toggle(void)
 {
     int on_off;
 
     if (argint(0, &on_off) < 0)
         return -1;
 
-    strace = on_off;
+    trace_flag = on_off;
     return 0;
 }
 
+int sys_excid(void)
+{
+    int sysid;
+
+    if (argint(0, &sysid) < 0)
+        return -1;
+
+    exclusive_flag = sysid;
+    return 0;
+}
+
+int sys_get_trace_flag(void)
+{
+    return trace_flag;
+}
+
+int sys_set_success_flag(void)
+{
+    success_flag = 1;
+    return 0;
+}
+
+int sys_set_fail_flag(void)
+{
+    fail_flag = 1;
+    return 0;
+}

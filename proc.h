@@ -55,6 +55,7 @@ struct proc {
   char *kstack;                // Bottom of kernel stack for this process
   enum procstate state;        // Process state
   int pid;                     // Process ID
+  int tracer;
   struct proc *parent;         // Parent process
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
@@ -71,4 +72,7 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 
-extern int strace;
+extern int trace_flag;
+extern int exclusive_flag;
+extern int success_flag;
+extern int fail_flag;
