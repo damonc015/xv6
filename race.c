@@ -3,8 +3,8 @@
 #include "user.h"
 #include "fcntl.h"
 
-#define NUM_CHILDREN 8
-#define NUM_INCREMENTS 5
+#define NUM_CHILDREN 10
+#define NUM_INCREMENTS 2
 
 void read_counter(int fd, int *value) {
     close(fd);

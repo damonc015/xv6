@@ -184,8 +184,56 @@ syscall(void)
   num = proc->tf->eax;
   if (proc->tracer && strncmp(proc->name, "strace", 6) != 0) {
     const char *syscall_name_str = syscall_name[num];
-    if(syscall_name_str && exclusive_flag){
-        // Only trace if it's the exclusive syscall we're interested in
+    if(syscall_name_str && exclusive_flag && success_flag){
+        // cprintf("DEBUG: Handling syscall with exclusive=%d success=%d flags\n", exclusive_flag, success_flag);
+        if(num == exclusive_flag){
+            return_value = syscalls[num]();
+            if(return_value >= 0) {
+                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
+                        proc->pid, proc->name, syscall_name_str, return_value);
+            }
+            
+            if(num == SYS_exit && strncmp(proc->name, "sh", 2) != 0){
+                exclusive_flag = 0;
+                success_flag = 0;
+                proc->tracer = 0;
+            }
+        } else {
+            if (num == SYS_exit) {
+                exclusive_flag = 0;
+                success_flag = 0;
+            }
+            return_value = syscalls[num]();
+        }
+        proc->tf->eax = return_value;
+        return;
+    }
+    else if(syscall_name_str && exclusive_flag && fail_flag){
+        // cprintf("DEBUG: Handling syscall with exclusive=%d fail=%d flags\n", exclusive_flag, fail_flag);
+        if(num == exclusive_flag){
+            return_value = syscalls[num]();
+            if(return_value < 0) {
+                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
+                        proc->pid, proc->name, syscall_name_str, return_value);
+            }
+            
+            if(num == SYS_exit && strncmp(proc->name, "sh", 2) != 0){
+                exclusive_flag = 0;
+                fail_flag = 0;
+                proc->tracer = 0;
+            }
+        } else {
+            if (num == SYS_exit) {
+                exclusive_flag = 0;
+                fail_flag = 0;
+            }
+            return_value = syscalls[num]();
+        }
+        proc->tf->eax = return_value;
+        return;
+    }
+    else if(syscall_name_str && exclusive_flag){
+        // cprintf("DEBUG: Handling syscall with exclusive=%d flag only\n", exclusive_flag);
         if(num == exclusive_flag){
             cprintf("TRACE: pid = %d | command name = %s | syscall = %s", 
                     proc->pid, proc->name, syscall_name_str);
@@ -211,6 +259,7 @@ syscall(void)
         return;
     }
     else if(syscall_name_str && success_flag){
+        // cprintf("DEBUG: Handling syscall with success=%d flag only\n", success_flag);
         // Store the flag for next shellcmd after strace on
         if (!trace_flag) {
             return_value = syscalls[num]();
@@ -220,7 +269,7 @@ syscall(void)
         
         // clear flags
         if(num == SYS_exit) {
-            cprintf("TRACE: pid = %d | command name = %s | syscall = %s | success_flag = %d | fail_flag = %d\n", 
+            cprintf("TRACE: pid = %d | command name = %s | syscall = %s\n", 
                     proc->pid, proc->name, syscall_name_str, success_flag, fail_flag);
             success_flag = 0;
             proc->tracer = 0;
@@ -228,7 +277,7 @@ syscall(void)
         } else {
             return_value = syscalls[num]();
             if(return_value >= 0) {
-                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d | success_flag = %d | fail_flag = %d\n", 
+                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
                         proc->pid, proc->name, syscall_name_str, return_value, success_flag, fail_flag);
             }
         }
@@ -237,6 +286,7 @@ syscall(void)
         return;
     }
     else if(syscall_name_str && fail_flag){
+        // cprintf("DEBUG: Handling syscall with fail=%d flag only\n", fail_flag);
         // Store the flag for next shellcmd after strace on
         if (!trace_flag) {
             return_value = syscalls[num]();
@@ -246,15 +296,13 @@ syscall(void)
         
         // clear flags
         if(num == SYS_exit) {
-            cprintf("TRACE: pid = %d | command name = %s | syscall = %s | success_flag = %d | fail_flag = %d\n", 
-                    proc->pid, proc->name, syscall_name_str, success_flag, fail_flag);
             fail_flag = 0;
             proc->tracer = 0;
             return_value = syscalls[num]();
         } else {
             return_value = syscalls[num]();
             if(return_value < 0) {
-                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d | success_flag = %d | fail_flag = %d\n", 
+                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
                         proc->pid, proc->name, syscall_name_str, return_value, success_flag, fail_flag);
             }
         }

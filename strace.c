@@ -33,7 +33,7 @@ int
 main(int argc, char *argv[])
 {
   if(argc < 2){
-    printf(2, "Usage: strace [on|off|run <command>]\n");
+    printf(2, "not enough args\n");
     exit();
   }
 
@@ -44,9 +44,40 @@ main(int argc, char *argv[])
   //exclusive_flag = 0;
 
   for(i = 1; i < argc; i++){
-    if(strcmp(argv[i], "-e") == 0){
+    if(strcmp(argv[i], "-f") == 0){
+      set_fail_flag();
+      if(i + 2 < argc && strcmp(argv[i + 1], "-e") == 0){
+        for(j = 1; j < 24; j++){
+          j_str = syscall_name[j];
+          if(strcmp(argv[i + 2], j_str) == 0){
+            excid(j);  
+            t_toggle(TRACE_ON);  
+            exit();
+          }
+        }
+        printf(2, "Unknown syscall: %s\n", argv[i + 2]);
+        exit();
+      }
+      exit();
+    } else if(strcmp(argv[i], "-s") == 0){
+      set_success_flag();
+      if(i + 2 < argc && strcmp(argv[i + 1], "-e") == 0){
+        for(j = 1; j < 24; j++){
+          j_str = syscall_name[j];
+          if(strcmp(argv[i + 2], j_str) == 0){
+            excid(j);  
+            t_toggle(TRACE_ON);  
+            exit();
+          }
+        }
+        printf(2, "Unknown syscall: %s\n", argv[i + 2]);
+        exit();
+      }
+      exit();
+    } else if(strcmp(argv[i], "-e") == 0){
+      // Original -e handling remains the same
       if(i + 1 >= argc){
-        printf(2, "Usage: strace -e <syscall>\n");
+        printf(2, "strace -e needs a <syscall>\n");
         exit();
       }
       
@@ -61,18 +92,12 @@ main(int argc, char *argv[])
       }
       printf(2, "Unknown syscall: %s\n", argv[i + 1]);
       exit();
-    } else if(strcmp(argv[i], "-f") == 0){
-      set_fail_flag();  
-      exit();  
-    } else if(strcmp(argv[i], "-s") == 0){
-      set_success_flag();   
-      exit();  
     }
   }
 
   if(strcmp(argv[1], "run") == 0){
     if(argc < 3){
-        printf(2, "Usage: strace run <command>\n");
+        printf(2, "strace run <command>\n");
         exit();
     }
     
@@ -98,7 +123,7 @@ main(int argc, char *argv[])
   } else if(strcmp(argv[1], "off") == 0){
     t_toggle(TRACE_OFF);
   } else {
-    printf(2, "Invalid argument. Use 'on' or 'off'.\n");
+    printf(2, "Invalid argument.\n");
     exit();
   }
   exit();
