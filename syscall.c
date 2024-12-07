@@ -187,16 +187,21 @@ syscall(void)
     if(syscall_name_str && exclusive_flag && success_flag){
         // cprintf("DEBUG: Handling syscall with exclusive=%d success=%d flags\n", exclusive_flag, success_flag);
         if(num == exclusive_flag){
-            return_value = syscalls[num]();
-            if(return_value >= 0) {
-                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
-                        proc->pid, proc->name, syscall_name_str, return_value);
-            }
-            
-            if(num == SYS_exit && strncmp(proc->name, "sh", 2) != 0){
+            if(num == SYS_exit) {
+                // Print before exit, don't check return value
+                cprintf("TRACE: pid = %d | command name = %s | syscall = %s\n", 
+                        proc->pid, proc->name, syscall_name_str);
                 exclusive_flag = 0;
                 success_flag = 0;
                 proc->tracer = 0;
+                return_value = syscalls[num]();
+            } else {
+                // For non-exit syscalls, check return value
+                return_value = syscalls[num]();
+                if(return_value >= 0) {
+                    cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
+                            proc->pid, proc->name, syscall_name_str, return_value);
+                }
             }
         } else {
             if (num == SYS_exit) {
@@ -209,18 +214,22 @@ syscall(void)
         return;
     }
     else if(syscall_name_str && exclusive_flag && fail_flag){
-        // cprintf("DEBUG: Handling syscall with exclusive=%d fail=%d flags\n", exclusive_flag, fail_flag);
         if(num == exclusive_flag){
-            return_value = syscalls[num]();
-            if(return_value < 0) {
-                cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
-                        proc->pid, proc->name, syscall_name_str, return_value);
-            }
-            
-            if(num == SYS_exit && strncmp(proc->name, "sh", 2) != 0){
+            if(num == SYS_exit) {
+                // Print before exit, don't check return value for exit
+                cprintf("TRACE: pid = %d | command name = %s | syscall = %s\n", 
+                        proc->pid, proc->name, syscall_name_str);
                 exclusive_flag = 0;
                 fail_flag = 0;
                 proc->tracer = 0;
+                return_value = syscalls[num]();
+            } else {
+                // For non-exit syscalls, check for failure
+                return_value = syscalls[num]();
+                if(return_value < 0) {
+                    cprintf("TRACE: pid = %d | command name = %s | syscall = %s | return value = %d\n", 
+                            proc->pid, proc->name, syscall_name_str, return_value);
+                }
             }
         } else {
             if (num == SYS_exit) {
